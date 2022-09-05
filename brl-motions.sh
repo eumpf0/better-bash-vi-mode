@@ -8,8 +8,15 @@
 # ß  end of line
 # $1  whole line (yy)
 
-WORDDELIMS=$'() {}#[]+/\=:.,;!"&%<>|~*$\'§'
-PAIRS=('()' '{}' '[]' '""' "''" "``")
+WORDDELIMS=$'() {}#[]+/\=:.,;!"&%<>|~*$\'§'     # deleimiters for words
+PAIRS=('()' '{}' '[]' '""' "''" "``")           # pairs
+
+# TODO: implement motion '%' moves to char from pair closest to cursor
+# if char under cursor does not match against PAIRS (equivalent to finding
+# innermost surrounding pair);
+# else (if char is already pair) move to corresponding "partner"
+
+# TODO: implement motions 'e' and 'b'
 
 matchLeft() {
     L=$1
