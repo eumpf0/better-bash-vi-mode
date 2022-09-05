@@ -19,18 +19,19 @@ PAIRS=('()' '{}' '[]' '""' "''" "``")           # pairs
 # TODO: implement motions 'e' and 'b'
 
 matchLeft() {
-    L=$1
-    until [[ "$WORDDELIMS" =~ "${READLINE_LINE:$L:1}" ]] || (( L<0 )); do
+    IFS='#' read -r L MATCH <<< "$@"
+    # $2: matchers
+    until [[ "$MATCH" =~ "${READLINE_LINE:$L:1}" ]] || (( L<0 )); do
         ((L--))
     done
 
     echo $L
 }
 matchRight() {
-    R=$1
+    IFS='#' read -r R MATCH <<< "$@"
     LEN=${#READLINE_LINE}
     END=$((LEN-1))
-    until [[ "$WORDDELIMS" =~ "${READLINE_LINE:$R:1}" ]] || (( R>END )); do
+    until [[ "$MATCH" =~ "${READLINE_LINE:$R:1}" ]] || (( R>END )); do
         ((R++))
     done 
 
@@ -38,8 +39,8 @@ matchRight() {
 }
 
 matchWords() {
-    L=$(matchLeft $1)
-    R=$(matchRight $1)
+    L=$(matchLeft $1#$WORDDELIMS)
+    R=$(matchRight $1#$WORDDELIMS)
     if ((L==R)); then 
         ((R++))
     else
