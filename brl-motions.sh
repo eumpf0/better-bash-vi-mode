@@ -8,7 +8,7 @@
 # ß  end of line
 # $1  whole line (yy)
 
-WORDDELIMS=$'() {}#[]+/\=:.,;!"&%<>|~*$\'§'     # deleimiters for words
+WORDDELIMS=$'() {}\#[]+/\=:.,;!"&%<>|~*$\'§'     # deleimiters for words
 PAIRS=('()' '{}' '[]' '""' "''" "``")           # pairs
 
 # TODO: implement motion '%' moves to char from pair closest to cursor
@@ -20,7 +20,6 @@ PAIRS=('()' '{}' '[]' '""' "''" "``")           # pairs
 
 matchLeft() {
     IFS='#' read -r L MATCH <<< "$@"
-    # $2: matchers
     until [[ "$MATCH" =~ "${READLINE_LINE:$L:1}" ]] || (( L<0 )); do
         ((L--))
     done
@@ -38,6 +37,27 @@ matchRight() {
     echo $R
 }
 
+matchBeginning() {
+    L=$1
+    ((L--))                 # look at pos before cursor
+    # if this char is a worddelim we are already at beginning of word
+    if (( $(matchLeft $L#$WORDDELIMS) == $L )); then
+        ((L--))             # thus move left
+    fi
+    # find next worddelim to the left
+    L=$(matchLeft $L#$WORDDELIMS)
+    echo $((L+1))
+}
+matchEnd() {
+    R=$1
+    ((R++))                 # look at pos after cursor
+    if (( $(matchLeft $R#$WORDDELIMS) == $R )); then
+        ((R++))             # move right
+    fi
+    R=$(matchRight $R#$WORDDELIMS)
+    echo $((R-1))
+}
+
 matchWords() {
     L=$(matchLeft $1#$WORDDELIMS)
     R=$(matchRight $1#$WORDDELIMS)
@@ -49,7 +69,6 @@ matchWords() {
     echo $L $R
 }
 
-ACTIONID="$1"
 
 read -n1 C
 if [[ $C == "-" ]]; then 
@@ -68,6 +87,7 @@ else
     INPUT="1"
 fi
 
+ACTIONKEY="$1"
 MOTION="$C"
 COUNT=$((INPUT+0))
 
@@ -75,38 +95,58 @@ COUNT=$((INPUT+0))
 case $MOTION in
     h)
         IDX=$((READLINE_POINT - COUNT))
-        LEN=$((COUNT + 1))
+        LEN=$COUNT
         ;;
+
     l)
-        IDX=$((READLINE_POINT))
-        LEN=$((COUNT + 1))
+        IDX=$READLINE_POINT
+        LEN=$COUNT
         ;;
+
     w)
+        read -r IDX R <<< "$(matchWords $READLINE_POINT)"
         if (( NEGATED!=1)); then
-            read -r IDX R <<< "$(matchWords $READLINE_POINT)"
             for ((i=1; i<COUNT;i++)); do
-                read -r L R <<< "$(matchWords $R)"
+                read -r TMP R <<< "$(matchWords $R)"
             done
-            LEN=$((R - IDX))
-        else # negated
-            read -r IDX R0 <<< "$(matchWords $READLINE_POINT)"
+        else
             for ((i=1; i<COUNT;i++)); do
-                read -r IDX R <<< "$(matchWords $((IDX-1)))"
+                read -r IDX TMP <<< "$(matchWords $((IDX-1)))"
             done
-            LEN=$((R0 - IDX))
         fi
+        LEN=$((R - IDX))
         ;;
+
     ß)
         IDX=$READLINE_POINT
-        LEN=$(( ${#readline_line} - IDX ))
+        LEN=$((${#READLINE_LINE} - IDX))
         ;;
+
     0)
         IDX=0
-        LEN=$(($READLINE_POINT + 1))
+        LEN=$READLINE_POINT
         ;;
-    $ACTIONID)
+
+    $ACTIONKEY)
         IDX=0
         LEN=${#READLINE_LINE}
+        ;;
+
+    b)
+        IDX=$(matchBeginning $READLINE_POINT)
+        for ((i=1; i<COUNT; i++)); do
+            IDX=$(matchBeginning $IDX)
+        done
+        LEN=$((READLINE_POINT - IDX))
+        ;;
+
+    e)
+        END=$(matchEnd $READLINE_POINT)
+        for ((i=1; i<COUNT; i++)); do
+            END=$(matchEnd $END)
+        done
+        IDX=$READLINE_POINT
+        LEN=$((END - IDX + 1))
         ;;
 esac
 
