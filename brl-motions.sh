@@ -1,12 +1,14 @@
 #!/bin/bash
 
 # motions:
-# h  left
-# l  right
-# w  word
-# 0  beg of line
-# ß  end of line
-# $1  whole line (yy)
+# h     left
+# l     right
+# w     whole word
+# 0     beginning of line
+# ß     end of line
+# $1    whole line (e.g. yy, dd)
+# b     beginning of word
+# e     end of word
 
 WORDDELIMS=$'() {}\#[]+/\=:.,;!"&%<>|~*$\'§'     # deleimiters for words
 PAIRS=('()' '{}' '[]' '""' "''" "``")           # pairs
@@ -15,8 +17,6 @@ PAIRS=('()' '{}' '[]' '""' "''" "``")           # pairs
 # if char under cursor does not match against PAIRS (equivalent to finding
 # innermost surrounding pair);
 # else (if char is already pair) move to corresponding "partner"
-
-# TODO: implement motions 'e' and 'b'
 
 matchLeft() {
     IFS='#' read -r L MATCH <<< "$@"
