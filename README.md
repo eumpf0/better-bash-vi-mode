@@ -22,6 +22,8 @@ you may open an issue or create a pull request if you have added any features et
 
 ## currently supported motions
 
+| key | motion |
+| :-: | :------|
 | `w` | whole word |
 | `0` | beginning of line |
 | `ß` | end of line |
