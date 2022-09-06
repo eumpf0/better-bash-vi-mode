@@ -10,15 +10,15 @@
 # b     beginning of word
 # e     end of word
 
-WORDDELIMS=$'() {}\#[]+/\=:.,;!"&%<>|~*$\'§'     # deleimiters for words
-PAIRS=('()' '{}' '[]' '""' "''" "``")           # pairs
+BRL_WORDDELIMS=$'() {}\#[]+/\=:.,;!"&%<>|~*$\'§'     # deleimiters for words
+BRL_PAIRS=('()' '{}' '[]' '""' "''" "``")           # pairs
 
 # TODO: implement motion '%' moves to char from pair closest to cursor
-# if char under cursor does not match against PAIRS (equivalent to finding
+# if char under cursor does not match against BRL_PAIRS (equivalent to finding
 # innermost surrounding pair);
 # else (if char is already pair) move to corresponding "partner"
 
-matchLeft() {
+brl-matchLeft() {
     IFS='#' read -r L MATCH <<< "$@"
     until [[ "$MATCH" =~ "${READLINE_LINE:$L:1}" ]] || (( L<0 )); do
         ((L--))
@@ -26,7 +26,7 @@ matchLeft() {
 
     echo $L
 }
-matchRight() {
+brl-matchRight() {
     IFS='#' read -r R MATCH <<< "$@"
     LEN=${#READLINE_LINE}
     END=$((LEN-1))
@@ -37,30 +37,30 @@ matchRight() {
     echo $R
 }
 
-matchBeginning() {
+brl-matchBeginning() {
     L=$1
     ((L--))                 # look at pos before cursor
     # if this char is a worddelim we are already at beginning of word
-    if (( $(matchLeft $L#$WORDDELIMS) == $L )); then
+    if (( $(brl-matchLeft $L#$BRL_WORDDELIMS) == $L )); then
         ((L--))             # thus move left
     fi
     # find next worddelim to the left
-    L=$(matchLeft $L#$WORDDELIMS)
+    L=$(brl-matchLeft $L#$BRL_WORDDELIMS)
     echo $((L+1))
 }
-matchEnd() {
+brl-matchEnd() {
     R=$1
     ((R++))                 # look at pos after cursor
-    if (( $(matchLeft $R#$WORDDELIMS) == $R )); then
+    if (( $(brl-matchLeft $R#$BRL_WORDDELIMS) == $R )); then
         ((R++))             # move right
     fi
-    R=$(matchRight $R#$WORDDELIMS)
+    R=$(brl-matchRight $R#$BRL_WORDDELIMS)
     echo $((R-1))
 }
 
-matchWords() {
-    L=$(matchLeft $1#$WORDDELIMS)
-    R=$(matchRight $1#$WORDDELIMS)
+brl-matchWords() {
+    L=$(brl-matchLeft $1#$BRL_WORDDELIMS)
+    R=$(brl-matchRight $1#$BRL_WORDDELIMS)
     if ((L==R)); then 
         ((R++))
     else
@@ -104,14 +104,14 @@ case $MOTION in
         ;;
 
     w)
-        read -r IDX R <<< "$(matchWords $READLINE_POINT)"
+        read -r IDX R <<< "$(brl-matchWords $READLINE_POINT)"
         if (( NEGATED!=1)); then
             for ((i=1; i<COUNT;i++)); do
-                read -r TMP R <<< "$(matchWords $R)"
+                read -r TMP R <<< "$(brl-matchWords $R)"
             done
         else
             for ((i=1; i<COUNT;i++)); do
-                read -r IDX TMP <<< "$(matchWords $((IDX-1)))"
+                read -r IDX TMP <<< "$(brl-matchWords $((IDX-1)))"
             done
         fi
         LEN=$((R - IDX))
@@ -133,17 +133,17 @@ case $MOTION in
         ;;
 
     b)
-        IDX=$(matchBeginning $READLINE_POINT)
+        IDX=$(brl-matchBeginning $READLINE_POINT)
         for ((i=1; i<COUNT; i++)); do
-            IDX=$(matchBeginning $IDX)
+            IDX=$(brl-matchBeginning $IDX)
         done
         LEN=$((READLINE_POINT - IDX))
         ;;
 
     e)
-        END=$(matchEnd $READLINE_POINT)
+        END=$(brl-matchEnd $READLINE_POINT)
         for ((i=1; i<COUNT; i++)); do
-            END=$(matchEnd $END)
+            END=$(brl-matchEnd $END)
         done
         IDX=$READLINE_POINT
         LEN=$((END - IDX + 1))
