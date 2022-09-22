@@ -12,13 +12,13 @@ brl-output-buffer()
 
 brl-yank()
 {
-    read -r IDX LEN <<< "$(./brl-motions.sh y)"
+    read -r IDX LEN <<< "$(brl-motions.sh y)"
     brl-input-buffer <<< "${READLINE_LINE:$IDX:$LEN}"
 }
 
 brl-cut()
 {
-    read -r IDX LEN <<< "$(./brl-motions.sh d)"
+    read -r IDX LEN <<< "$(brl-motions.sh d)"
     brl-input-buffer <<< "${READLINE_LINE:$IDX:$LEN}"
     READLINE_LINE="${READLINE_LINE::$IDX}${READLINE_LINE:$((IDX+LEN))}"
     READLINE_POINT=$IDX
